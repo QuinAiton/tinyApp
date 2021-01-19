@@ -30,6 +30,7 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
+//create routes
 app.get('/urls/new', (req, res) => {
   res.render('urls_new');
 });
@@ -40,16 +41,32 @@ app.post('/urls', (req, res) => {
   res.redirect('urls/' + shortUrl);
 });
 
+//show route
 app.get('/urls/:id', (req, res) => {
   const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render('urls_show', templateVars);
 });
 
+//Delete Route
 app.post('/urls/:id/delete', (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect('/urls')
 })
 
+//update routes
+app.get('/urls/:id/update', (req, res) => {
+  const templateVars = { name: req.params.id }
+  res.render('urls_update', templateVars)
+})
+
+app.post('/urls/:id', (req, res) => {
+  let shortURL = req.params.id;
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect('/urls/' + shortURL);
+})
+
+
+//redirect route
 app.get('/u/:id', (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
