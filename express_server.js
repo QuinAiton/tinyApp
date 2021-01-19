@@ -9,7 +9,7 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 //database
-const urlDatabase = {
+let urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 }
@@ -34,13 +34,19 @@ app.get('/urls/new', (req, res) => {
 })
 
 app.post('/urls', (req, res) => {
-  console.log(req.body)
-  res.send()
+  let shortUrl = generateRandomString();
+  urlDatabase[shortUrl] = req.body.longURL;
+  res.redirect('urls/' + shortUrl)
 });
 
-app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: req.params.longURL }
+app.get('/urls/:id', (req, res) => {
+  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id] }
   res.render('urls_show', templateVars)
+})
+
+app.get('/u/:id', (req, res) => {
+  const longURL = urlDatabase[req.params.id]
+  res.redirect(longURL);
 })
 
 app.get("/hello", (req, res) => {
