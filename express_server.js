@@ -34,7 +34,8 @@ app.get('/urls', (req, res) => {
 
 //create routes
 app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
+  templateVars = { username: req.cookies.username }
+  res.render('urls_new', templateVars);
 });
 
 app.post('/urls', (req, res) => {
