@@ -67,11 +67,14 @@ app.post('/urls/:id', (req, res) => {
   res.redirect('/urls/' + shortURL);
 });
 
-//login route
-
+//Authentification routes
 app.post('/login', (req, res) => {
   res.cookie('username', req.body.username)
-  console.log(req.cookies)
+  res.redirect('/urls')
+})
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
   res.redirect('/urls')
 })
 
