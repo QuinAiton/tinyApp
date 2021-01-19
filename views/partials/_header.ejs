@@ -15,9 +15,13 @@
             <button class='btn btn-outline-light' type="submit">login</button>
           </form>
           <% }else{ %>
-            <h4>
+            <h4 id="userDisplay">
               Welcome <%=username %>
             </h4>
+            <form action="/logout" method="POST">
+              <button class="btn btn-outline-light" type="submit">Logout
+              </button>
+            </form>
             <% } %>
       </div>
     </div>
