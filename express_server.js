@@ -1,6 +1,7 @@
-//imports 
+//imports
 const express = require('express'),
   bodyParser = require('body-parser'),
+  cookieParser = require('cookie-parser'),
   app = express(),
   PORT = 8080;
 //-----------------------------------------------------------------------------------------------
@@ -9,6 +10,7 @@ const express = require('express'),
 //environment set up
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 //-----------------------------------------------------------------------------------------------
 
 
@@ -26,7 +28,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies.username };
   res.render('urls_index', templateVars);
 });
 
@@ -43,28 +45,35 @@ app.post('/urls', (req, res) => {
 
 //show route
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies.username };
   res.render('urls_show', templateVars);
 });
 
 //Delete Route
 app.post('/urls/:id/delete', (req, res) => {
   delete urlDatabase[req.params.id];
-  res.redirect('/urls')
-})
+  res.redirect('/urls');
+});
 
 //update routes
 app.get('/urls/:id/update', (req, res) => {
-  const templateVars = { name: req.params.id }
-  res.render('urls_update', templateVars)
-})
+  const templateVars = { name: req.params.id, username: req.cookies.username };
+  res.render('urls_update', templateVars);
+});
 
 app.post('/urls/:id', (req, res) => {
   let shortURL = req.params.id;
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect('/urls/' + shortURL);
-})
+});
 
+//login route
+
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username)
+  console.log(req.cookies)
+  res.redirect('/urls')
+})
 
 //redirect route
 app.get('/u/:id', (req, res) => {
@@ -81,7 +90,7 @@ const generateRandomString = () => {
 };
 //-----------------------------------------------------------------------------------------------
 
-//server 
+//server
 app.listen(PORT, () => {
   console.log(`server listening on port ${PORT}`);
 });
