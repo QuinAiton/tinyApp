@@ -23,7 +23,12 @@ let urlDatabase = {
 };
 
 let users = {
-
+  sdfsdfs: {
+    id: 'sdfsdfws', email: 'quin@hotmail.com', pass: 'asdfsdfs'
+  },
+  fdgregdfg: {
+    id: 'sdfsdfws', email: 'nally@hotmail.com', pass: 'asdfsdfs'
+  }
 }
 
 //
@@ -84,15 +89,18 @@ app.get('/registration', (req, res) => {
 })
 
 app.post('/registration', (req, res) => {
-  let uniqueId = generateRandomString();
-  users[uniqueId] = {
-    id: uniqueId,
-    email: req.body.user.username,
-    password: req.body.user.password,
+  if (checkExistingUser(req.body.user.email) === false) {
+    let uniqueId = generateRandomString();
+    users[uniqueId] = {
+      id: uniqueId,
+      email: req.body.user.email,
+      password: req.body.user.password,
+    }
+    res.cookie('user_id', uniqueId)
+    res.redirect('/urls')
+  } else {
+    res.sendStatus(400)
   }
-  res.cookie('user_id', uniqueId)
-  console.log(`user generated ${JSON.stringify(users[req.cookies.user_id])}`)
-  res.redirect('/urls')
 })
 
 //login and logout routes
@@ -112,12 +120,23 @@ app.get('/u/:id', (req, res) => {
   res.redirect(longURL);
 });
 
-//----------------------------Application functions
+//----------------------------Helper functions
 
+//generates random 6 alphanumeric id
 const generateRandomString = () => {
   let randomString = Math.random().toString(36).slice(2);
   return randomString.slice(1, 7);
 };
+
+//checks user database returns true if user already exists
+const checkExistingUser = (email) => {
+  for (const key in users) {
+    if (users[key].email === email) {
+      return true;
+    }
+  }
+  return false;
+}
 
 
 //server
