@@ -9,8 +9,10 @@ const express = require('express'),
 
 //environment set up
 app.set('view engine', 'ejs');
+app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+
 //-----------------------------------------------------------------------------------------------
 
 
