@@ -4,6 +4,8 @@
 #welcome { 
   font-size: 1.5em;
   align-items: center;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 #logout { 
@@ -20,7 +22,7 @@
 }
 /* register */
 .register{ 
-  width: 50%;
+  width: 40%;
   padding-top: 300px;
   display: flex;
   flex-direction: column;

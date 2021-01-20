@@ -3,10 +3,10 @@
   <body>
     <%- include('partials/_header') %>
       <div class="register">
-        <h1>Register</h1>
+        <h1>Create an Account</h1>
         <form action="/registration" method="POST">
           <div class="mb-3">
-            <label for="username" class="form-label">Email address</label>
+            <label for="email" class="form-label">Email address</label>
             <input type="email" name="user[email]" class="form-control" placeholder="name@example.com" required>
           </div>
           <div class="mb-3">
@@ -15,6 +15,8 @@
               required>
           </div>
           <button class="btn btn-primary" type="submit">Create User</button>
+          <p>Already have and account? <a href="/login"> Login Here</a></p>
+
         </form>
       </div>
 

@@ -7,17 +7,15 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav d-flex align-items-center">
-        <a class="nav-item nav-link mr-auto p-2 " href="/urls">My URLs</a>
-        <a class="nav-item nav-link mr-auto p-2" href="/urls/new">Add New URL</a>
+        <a class="nav-item nav-link" href="/urls">My URLs</a>
+        <a class="nav-item nav-link" href="/urls/new">Add New URL</a>
         <% if(!user) { %>
-          <form id="login" action="/login" method="POST">
-            <input type="text" name="username" placeholder="Username">
-            <button class='btn btn-outline-light' type="submit">login</button>
-          </form>
+          <a class="nav-item nav-link" href="/login">Login / register</a>
           <% }else{ %>
             <h4 id="welcome">
               Welcome <%=user.email%>
             </h4>
+            <br>
             <form id="logout" action="/logout" method="POST">
               <button class="btn btn-outline-light" type="submit">Logout
               </button>

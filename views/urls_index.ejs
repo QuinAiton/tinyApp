@@ -3,7 +3,9 @@
   <body>
     <%- include('partials/_header') %>
       <main class="indexUrl" style="margin: 1em;">
-        <h3>My URLs</h3>
+        <h3>
+          Custom URLs
+        </h3>
         <table class="table">
           <thead>
             <tr>
@@ -17,7 +19,9 @@
             <% for(let url in urls) { %>
               <tr>
                 <td>
-                  <%= url %>
+                  <a href="u/<%= url%>">
+                    <%= url %>
+                  </a>
                 </td>
                 <td>
                   <%= urls[url]%>
