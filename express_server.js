@@ -23,11 +23,10 @@ let urlDatabase = {
 };
 
 let users = {
-  sdfsdfs: {
-    id: 'sdfsdfws', email: 'quin@hotmail.com', pass: 'asdfsdfs'
-  },
-  fdgregdfg: {
-    id: 'sdfsdfws', email: 'nally@hotmail.com', pass: 'asdfsdfs'
+  '2ff4s3': {
+    id: '2ff4s3',
+    email: 'quinn@hotmail.com',
+    password: '1111'
   }
 }
 
@@ -89,7 +88,7 @@ app.get('/registration', (req, res) => {
 })
 
 app.post('/registration', (req, res) => {
-  if (checkExistingUser(req.body.user.email) === false) {
+  if (checkExistingEmail(req.body.user.email) === false) {
     let uniqueId = generateRandomString();
     users[uniqueId] = {
       id: uniqueId,
@@ -103,14 +102,24 @@ app.post('/registration', (req, res) => {
   }
 })
 
-//login and logout routes
-app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username)
-  res.redirect('/urls')
+//login routes
+app.get('/login', (req, res) => {
+  templateVars = { user: users[req.cookies.user_id] }
+  res.render('login', templateVars)
 })
 
+app.post('/login', (req, res) => {
+  if (CheckExistingUser(req.body.user.email, req.body.user.password)) {
+    res.cookie('user_id', getExistingKey(req.body.user.email))
+    res.redirect('/urls')
+  } else {
+    res.sendStatus(403)
+  }
+})
+
+//logout route
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id')
   res.redirect('/urls')
 })
 
@@ -129,7 +138,7 @@ const generateRandomString = () => {
 };
 
 //checks user database returns true if user already exists
-const checkExistingUser = (email) => {
+const checkExistingEmail = (email) => {
   for (const key in users) {
     if (users[key].email === email) {
       return true;
@@ -138,6 +147,24 @@ const checkExistingUser = (email) => {
   return false;
 }
 
+//checks user credentials to see if an account already exitsts before loggin in
+const CheckExistingUser = (email, password) => {
+  for (const key in users) {
+    if (users[key].email === email && users[key].password === password) {
+      return true;
+    }
+  }
+  return false;
+}
+
+//grabs the users id if user already exists
+const getExistingKey = (email) => {
+  for (const key in users) {
+    if (users[key].email === email) {
+      return users[key].id;
+    }
+  }
+}
 
 //server
 app.listen(PORT, () => {
