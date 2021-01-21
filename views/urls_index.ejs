@@ -18,35 +18,33 @@
           <tbody>
             <% if(user){ %>
               <% for(let url in urls) { %>
-                <% if(user.id===urls[url].userID){ %>
-                  <tr>
-                    <td>
-                      <a href="u/<%= url%>">
-                        <%= url %>
-                      </a>
-                    </td>
-                    <td>
-                      <%= urls[url].longURL%>
-                    </td>
-                    <td>
-                      <form action="/urls/<%= url %>/delete" method="POST">
-                        <button class="btn btn-outline-danger" type="submit">Delete
-                        </button>
-                      </form>
-                    </td>
-                    <td>
-                      <a href="/urls/<%=url%>/update">
-                        <button class="btn btn-outline-warning" type="submit">
-                          Edit
-                        </button>
-                      </a>
-                    </td>
-                  </tr>
-                  <% } %>
+                <tr>
+                  <td>
+                    <a href="u/<%= url%>">
+                      <%= url %>
+                    </a>
+                  </td>
+                  <td>
+                    <%= urls[url].longURL%>
+                  </td>
+                  <td>
+                    <form action="/urls/<%= url %>/delete" method="POST">
+                      <button class="btn btn-outline-danger" type="submit">Delete
+                      </button>
+                    </form>
+                  </td>
+                  <td>
+                    <a href="/urls/<%=url%>/update">
+                      <button class="btn btn-outline-warning" type="submit">
+                        Edit
+                      </button>
+                    </a>
+                  </td>
+                </tr>
+                <% } %>
+                  <% }else{ %>
+                    <h2>You must be Logged in To see your URLs</h2>
                     <% } %>
-                      <% }else{ %>
-                        <h3>You must be logged in to see your urls</h3>
-                        <% } %>
           </tbody>
         </table>
       </main>
