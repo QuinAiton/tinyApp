@@ -1,27 +1,30 @@
-<header>
-  <nav class="navbar navbar-expand-md navbar-dark bg-success d-flex flex-column">
-    <a class="navbar-brand" href="/urls">TinyApp</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
-      aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav d-flex align-items-center">
-        <a class="nav-item nav-link" href="/urls">My URLs</a>
-        <a class="nav-item nav-link" href="/urls/new">Add New URL</a>
-        <% if(!user) { %>
-          <a class="nav-item nav-link" href="/login">Login / register</a>
-          <% }else{ %>
-            <h4 id="welcome">
-              Welcome <%=user.email%>
-            </h4>
-            <br>
-            <form id="logout" action="/logout" method="POST">
-              <button class="btn btn-outline-light" type="submit">Logout
-              </button>
-            </form>
-            <% } %>
+<%- include('_head') %>
+
+  <header>
+    <nav class="navbar navbar-expand-md navbar-dark bg-success d-flex flex-column ">
+      <a id="title" class="navbar-brand" href="/urls">TinyApp</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
+        aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse d-flex justify-content-center " id=" navbarNavAltMarkup">
+        <div class="navbar-nav">
+          <a class="nav-item nav-link" href="/urls">My URLs</a>
+          <a class="nav-item nav-link" href="/urls/new">Add New URL</a>
+          <div class="d-flex flex-row" id="auth">
+            <% if(!user) { %>
+              <a class="nav-item nav-link" href="/login">Login / Register</a>
+              <% }else{ %>
+                <h4 id="welcome">
+                  Welcome <%=user.email%>
+                </h4>
+                <form id="logout" action="/logout" method="POST">
+                  <button class="btn btn-outline-light" type="submit">Logout
+                  </button>
+                </form>
+                <% } %>
+          </div>
+        </div>
       </div>
-    </div>
-  </nav>
-</header>
+    </nav>
+  </header>

@@ -2,28 +2,23 @@
 
 /* navbar styles */
 #welcome { 
-  font-size: 1.5em;
-  align-items: center;
+  font-size: 1.3em;
   padding-left: 10px;
   padding-right: 10px;
 }
 
-#logout { 
-  display: flex;
-  text-align: center;
-  align-items: center;
-  float: right;
+#auth { 
+  padding-left: 1200px;
 }
 
-#login { 
-  display: flex;
-  text-align: center;
-  align-items: center;
+#title { 
+  font-size: 1.5em;
+  margin :0;
 }
 /* register */
 .register{ 
-  width: 40%;
-  padding-top: 300px;
+  width: 35%;
+  padding-top: 250px;
   display: flex;
   flex-direction: column;
   text-align: center;
