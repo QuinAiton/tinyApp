@@ -1,3 +1,5 @@
+const { json } = require('body-parser');
+
 //imports
 const express = require('express'),
   bodyParser = require('body-parser'),
@@ -18,13 +20,19 @@ app.use(cookieParser());
 
 //database
 let urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: 'aJ48lW'
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: 'aJ48lW'
+  },
 };
 
 let users = {
-  '2ff4s3': {
-    id: '2ff4s3',
+  'aJ48lW': {
+    id: 'aJ48lW',
     email: 'quinn@hotmail.com',
     password: '1111'
   }
@@ -35,7 +43,7 @@ let users = {
 //-------------------------------------Routes
 
 app.get('/', (req, res) => {
-  res.send('hello');
+  res.redirect('/urls');
 });
 
 app.get('/urls', (req, res) => {
@@ -45,13 +53,20 @@ app.get('/urls', (req, res) => {
 
 //create routes
 app.get('/urls/new', (req, res) => {
-  templateVars = { user: users[req.cookies.user_id] }
-  res.render('urls_new', templateVars);
+  if (req.cookies.user_id) {
+    templateVars = { user: users[req.cookies.user_id] }
+    res.render('urls_new', templateVars);
+  } else {
+    res.redirect('/login')
+  }
 });
 
 app.post('/urls', (req, res) => {
   let shortUrl = generateRandomString();
-  urlDatabase[shortUrl] = req.body.longURL;
+  urlDatabase.shortUrl = {
+    longURL: req.body.longURL,
+    userID: req.cookies.user_id
+  }
   res.redirect('urls/' + shortUrl);
 });
 
