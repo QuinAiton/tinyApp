@@ -3,8 +3,9 @@
 const express = require('express'),
   bodyParser = require('body-parser'),
   cookieParser = require('cookie-parser'),
+  bcrypt = require('bcrypt'),
   app = express(),
-  PORT = 8080;
+  PORT = process.env.PORT || 8080;
 
 
 
@@ -21,19 +22,19 @@ app.use(cookieParser());
 let urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
-    userID: 'aJ48lW'
+    userID: "8pm1jb"
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
-    userID: 'aJ48lW'
+    userID: "8pm1jb"
   },
 };
 
 let users = {
-  'aJ48lW': {
-    id: 'aJ48lW',
-    email: 'quinn@hotmail.com',
-    password: '1111'
+  "8pm1jb": {
+    id: "8pm1jb",
+    email: "quinn@hotmail.com",
+    password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m"
   }
 };
 
@@ -106,6 +107,7 @@ app.post('/urls/:id', (req, res) => {
 
 //----------------------------Authentification
 
+
 //registration routes
 app.get('/registration', (req, res) => {
   let templateVars = { user: users[req.cookies.user_id] };
@@ -113,19 +115,30 @@ app.get('/registration', (req, res) => {
 });
 
 app.post('/registration', (req, res) => {
-  if (checkExistingEmail(req.body.user.email) === false) {
-    let uniqueId = generateRandomString();
-    users[uniqueId] = {
-      id: uniqueId,
-      email: req.body.user.email,
-      password: req.body.user.password,
-    };
-    res.cookie('user_id', uniqueId);
-    res.redirect('/urls');
+  const saltRounds = 10;
+  const plainPass = req.body.user.password;
+  const email = req.body.user.email;
+  const uniqueId = generateRandomString();
+
+  if (checkExistingEmail(email) === false) {
+    bcrypt.hash(plainPass, saltRounds, (err, hash) => {
+      if (err) {
+        console.log(err)
+      } else {
+        users[uniqueId] = {
+          id: uniqueId,
+          email: req.body.user.email,
+          password: hash,
+        };
+        res.cookie('user_id', uniqueId);
+        res.redirect('/urls');
+      }
+    });
   } else {
-    res.sendStatus(400);
+    res.status(400).send('That email already exists, Please choose a different one or log into the existing account');
   }
 });
+
 
 //login routes
 app.get('/login', (req, res) => {
@@ -134,12 +147,23 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  if (CheckExistingUser(req.body.user.email, req.body.user.password)) {
-    res.cookie('user_id', getExistingKey(req.body.user.email));
-    res.redirect('/urls');
-  } else {
-    res.sendStatus(403);
-  }
+  const email = req.body.user.email;
+  const plainPass = req.body.user.password;
+  const HashPass = users[getExistingKey(email)].password;
+
+  //check password hash match
+  bcrypt.compare(plainPass, HashPass, (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      if (checkExistingEmail(email) && result) {
+        res.cookie('user_id', getExistingKey(email));
+        res.redirect('/urls');
+      } else {
+        res.status(403).send('Authourization Denied: please check your credentials');
+      }
+    }
+  });
 });
 
 //logout route
