@@ -2,19 +2,22 @@
 //imports
 const express = require('express'),
   bodyParser = require('body-parser'),
-  cookieParser = require('cookie-parser'),
+  cookieSession = require('cookie-session'),
   bcrypt = require('bcrypt'),
   app = express(),
   PORT = process.env.PORT || 8080;
 
 
 
-//----------------------------environment set up
+//----------------------------environment set up & middleware
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
-
+app.use(cookieSession({
+  name: 'session',
+  keys: ['lighthouseLabs'],
+  maxAge: 24 * 60 * 60 * 1000
+}));
 //
 
 
@@ -47,15 +50,15 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const userUrls = urlsForUser(req.cookies.user_id);
-  const templateVars = { urls: userUrls, user: users[req.cookies.user_id] };
+  const userUrls = urlsForUser(req.session.user_id);
+  const templateVars = { urls: userUrls, user: users[req.session.user_id] };
   res.render('urls_index', templateVars);
 });
 
 //create routes
 app.get('/urls/new', (req, res) => {
-  if (req.cookies.user_id) {
-    let templateVars = { user: users[req.cookies.user_id] };
+  if (req.session.user_id) {
+    let templateVars = { user: users[req.session.user_id] };
     res.render('urls_new', templateVars);
   } else {
     res.redirect('/login');
@@ -66,20 +69,20 @@ app.post('/urls', (req, res) => {
   let shortUrl = generateRandomString();
   urlDatabase[shortUrl] = {
     longURL: req.body.longURL,
-    userID: req.cookies.user_id
+    userID: req.session.user_id
   };
   res.redirect('urls/' + shortUrl);
 });
 
 //show route
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.cookies.user_id] };
+  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.session.user_id] };
   res.render('urls_show', templateVars);
 });
 
 //Delete Route
 app.post('/urls/:id/delete', (req, res) => {
-  if (req.cookies.user_id === urlDatabase[req.params.id].userID) {
+  if (req.session.user_id === urlDatabase[req.params.id].userID) {
     delete urlDatabase[req.params.id];
     res.redirect('/urls');
   } else {
@@ -90,8 +93,8 @@ app.post('/urls/:id/delete', (req, res) => {
 
 //update routes
 app.get('/urls/:id/update', (req, res) => {
-  if (req.cookies.user_id === urlDatabase[req.params.id].userID) {
-    const templateVars = { name: req.params.id, user: users[req.cookies.user_id] };
+  if (req.session.user_id === urlDatabase[req.params.id].userID) {
+    const templateVars = { name: req.params.id, user: users[req.session.user_id] };
     res.render('urls_update', templateVars);
   } else {
     res.redirect('/login');
@@ -110,7 +113,7 @@ app.post('/urls/:id', (req, res) => {
 
 //registration routes
 app.get('/registration', (req, res) => {
-  let templateVars = { user: users[req.cookies.user_id] };
+  let templateVars = { user: users[req.session.user_id] };
   res.render('userRegistration', templateVars);
 });
 
@@ -130,7 +133,7 @@ app.post('/registration', (req, res) => {
           email: req.body.user.email,
           password: hash,
         };
-        res.cookie('user_id', uniqueId);
+        req.session.user_id = uniqueId;
         res.redirect('/urls');
       }
     });
@@ -142,7 +145,7 @@ app.post('/registration', (req, res) => {
 
 //login routes
 app.get('/login', (req, res) => {
-  let templateVars = { user: users[req.cookies.user_id] };
+  let templateVars = { user: users[req.session.user_id] };
   res.render('login', templateVars);
 });
 
@@ -157,7 +160,7 @@ app.post('/login', (req, res) => {
       console.log(err);
     } else {
       if (checkExistingEmail(email) && result) {
-        res.cookie('user_id', getExistingKey(email));
+        req.session.user_id = getExistingKey(email);
         res.redirect('/urls');
       } else {
         res.status(403).send('Authourization Denied: please check your credentials');
@@ -168,7 +171,7 @@ app.post('/login', (req, res) => {
 
 //logout route
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/urls');
 });
 
