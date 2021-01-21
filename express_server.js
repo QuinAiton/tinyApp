@@ -72,7 +72,7 @@ app.post('/urls', (req, res) => {
 
 //show route
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id], user: users[req.cookies.user_id] };
+  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.cookies.user_id] };
   res.render('urls_show', templateVars);
 });
 
