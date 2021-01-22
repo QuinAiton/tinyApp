@@ -3,6 +3,7 @@
 const express = require('express'),
   bodyParser = require('body-parser'),
   cookieSession = require('cookie-session'),
+  methodOverride = require('method-override'),
   bcrypt = require('bcrypt'),
   app = express(),
   PORT = process.env.PORT || 8080;
@@ -17,6 +18,7 @@ const checkExistingEmail = require('./helpers/checkExistingEmail'),
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
 app.use(cookieSession({
   name: 'session',
   keys: ['lighthouseLabs'],
@@ -57,7 +59,10 @@ app.get('/', (req, res) => {
 
 app.get('/urls', (req, res) => {
   const userUrls = urlsForUser(req.session.user_id, urlDatabase);
-  const templateVars = { urls: userUrls, user: users[req.session.user_id] };
+  const templateVars = {
+    urls: userUrls,
+    user: users[req.session.user_id]
+  };
   res.render('urls_index', templateVars);
 });
 
@@ -82,12 +87,16 @@ app.post('/urls', (req, res) => {
 
 //show route
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[req.session.user_id] };
+  const templateVars = {
+    shortURL: req.params.id,
+    longURL: urlDatabase[req.params.id].longURL,
+    user: users[req.session.user_id]
+  };
   res.render('urls_show', templateVars);
 });
 
 //Delete Route
-app.post('/urls/:id/delete', (req, res) => {
+app.delete('/urls/:id', (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.id].userID) {
     delete urlDatabase[req.params.id];
     res.redirect('/urls');
@@ -100,14 +109,17 @@ app.post('/urls/:id/delete', (req, res) => {
 //update routes
 app.get('/urls/:id/update', (req, res) => {
   if (req.session.user_id === urlDatabase[req.params.id].userID) {
-    const templateVars = { name: req.params.id, user: users[req.session.user_id] };
+    const templateVars = {
+      name: req.params.id,
+      user: users[req.session.user_id]
+    };
     res.render('urls_update', templateVars);
   } else {
     res.redirect('/login');
   }
 });
 
-app.post('/urls/:id', (req, res) => {
+app.put('/urls/:id', (req, res) => {
   let shortURL = req.params.id;
   urlDatabase[shortURL].longURL = req.body.longURL;
   res.redirect('/urls/' + shortURL);
@@ -127,7 +139,7 @@ app.get('/u/:id', (req, res) => {
 //registration routes
 app.get('/registration', (req, res) => {
   let templateVars = { user: users[req.session.user_id] };
-  res.render('userRegistration', templateVars);
+  res.render('register', templateVars);
 });
 
 app.post('/registration', (req, res) => {
@@ -136,7 +148,7 @@ app.post('/registration', (req, res) => {
   const email = req.body.user.email;
   const uniqueId = generateRandomString();
 
-  if (checkExistingEmail(email, users) === false) {
+  if (!checkExistingEmail(email, users)) {
     bcrypt.hash(plainPass, saltRounds, (err, hash) => {
       if (err) {
         console.log(err)
@@ -167,20 +179,22 @@ app.post('/login', (req, res) => {
   const plainPass = req.body.user.password;
   const HashPass = checkExistingEmail(email, users).password;
   const key = checkExistingEmail(email, users).id;
-
-  //bcrypt hashpass check
-  bcrypt.compare(plainPass, HashPass, (err, result) => {
-    if (err) {
-      console.log(err);
-    } else {
-      if (checkExistingEmail(email, users) && result) {
-        req.session.user_id = key;
-        res.redirect('/urls');
+  if (checkExistingEmail(email, users)) {
+    bcrypt.compare(plainPass, HashPass, (err, result) => {
+      if (err) {
+        console.log(err);
       } else {
-        res.status(403).send('Authourization Denied: please check your credentials');
+        if (checkExistingEmail(email, users) && result) {
+          req.session.user_id = key;
+          res.redirect('/urls');
+        } else {
+          res.status(403).send('Authourization Denied: please check your credentials');
+        }
       }
-    }
-  });
+    });
+  } else {
+    res.redirect('/registration');
+  }
 });
 
 //logout route
