@@ -4,11 +4,11 @@
     <%- include('partials/_header') %>
 
       <main class="createUrl">
-        <h3>Updating: <span id="updateTitle">
+        <h3>Update the long URL for: <br><span id="updateTitle">
             <%=name%>
           </span>
         </h3>
-        <form class=" form-inline" action="/urls/<%=name%>" method="POST">
+        <form class=" form-inline" action="/urls/<%=name%>?_method=PUT" method="POST">
           <div class="form-group mb-2">
             <label for="longURL">Enter a new URL:</label>
             <input class="form-control" type="text" name="longURL" placeholder="http://"
