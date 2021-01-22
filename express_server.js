@@ -1,5 +1,5 @@
 
-//imports
+//packages
 const express = require('express'),
   bodyParser = require('body-parser'),
   cookieSession = require('cookie-session'),
@@ -7,6 +7,10 @@ const express = require('express'),
   app = express(),
   PORT = process.env.PORT || 8080;
 
+// Helper functions
+const checkExistingEmail = require('./helpers/checkExistingEmail'),
+  urlsForUser = require('./helpers/urlsForUser'),
+  generateRandomString = require('./helpers/generateRandomString');
 
 
 //----------------------------environment set up & middleware
@@ -19,7 +23,6 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000
 }));
 //
-
 
 //---------------------------------database
 let urlDatabase = {
@@ -38,10 +41,13 @@ let users = {
     id: "8pm1jb",
     email: "quinn@hotmail.com",
     password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m"
+  },
+  "8pmwer": {
+    id: "8pm1jb",
+    email: "bonny@hotmail.com",
+    password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m"
   }
 };
-
-//
 
 //-------------------------------------Routes
 
@@ -50,7 +56,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const userUrls = urlsForUser(req.session.user_id);
+  const userUrls = urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = { urls: userUrls, user: users[req.session.user_id] };
   res.render('urls_index', templateVars);
 });
@@ -108,6 +114,13 @@ app.post('/urls/:id', (req, res) => {
 
 });
 
+//Long URl redirect route
+app.get('/u/:id', (req, res) => {
+  const longURL = urlDatabase[req.params.id].longURL;
+  res.redirect(longURL);
+});
+
+
 //----------------------------Authentification
 
 
@@ -123,7 +136,7 @@ app.post('/registration', (req, res) => {
   const email = req.body.user.email;
   const uniqueId = generateRandomString();
 
-  if (checkExistingEmail(email) === false) {
+  if (checkExistingEmail(email, users) === false) {
     bcrypt.hash(plainPass, saltRounds, (err, hash) => {
       if (err) {
         console.log(err)
@@ -152,15 +165,16 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const email = req.body.user.email;
   const plainPass = req.body.user.password;
-  const HashPass = users[getExistingKey(email)].password;
+  const HashPass = checkExistingEmail(email, users).password;
+  const key = checkExistingEmail(email, users).id;
 
-  //check password hash match
+  //bcrypt hashpass check
   bcrypt.compare(plainPass, HashPass, (err, result) => {
     if (err) {
       console.log(err);
     } else {
-      if (checkExistingEmail(email) && result) {
-        req.session.user_id = getExistingKey(email);
+      if (checkExistingEmail(email, users) && result) {
+        req.session.user_id = key;
         res.redirect('/urls');
       } else {
         res.status(403).send('Authourization Denied: please check your credentials');
@@ -175,61 +189,9 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls');
 });
 
-//Long URl redirect route
-app.get('/u/:id', (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
-  res.redirect(longURL);
-});
 
-//----------------------------Helper functions
 
-//generates random 6 alphanumeric id
-const generateRandomString = () => {
-  let randomString = Math.random().toString(36).slice(2);
-  return randomString.slice(1, 7);
-};
-
-//checks user database returns true if user already exists
-const checkExistingEmail = (email) => {
-  for (const key in users) {
-    if (users[key].email === email) {
-      return true;
-    }
-  }
-  return false;
-};
-
-//checks user credentials to see if an account already exitsts before loggin in
-const CheckExistingUser = (email, password) => {
-  for (const key in users) {
-    if (users[key].email === email && users[key].password === password) {
-      return true;
-    }
-  }
-  return false;
-};
-
-//grabs the users id if user already exists
-const getExistingKey = (email) => {
-  for (const key in users) {
-    if (users[key].email === email) {
-      return users[key].id;
-    }
-  }
-};
-
-//find all url objects created by a given UserId and returns them in a new object
-const urlsForUser = (id) => {
-  let userUrls = {};
-  for (const key in urlDatabase) {
-    if (urlDatabase[key].userID === id) {
-      userUrls[key] = urlDatabase[key];
-    }
-  }
-  return userUrls;
-};
-
-//server
+//server listener
 app.listen(PORT, () => {
   console.log(`server listening on port ${PORT}`);
 });
