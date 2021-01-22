@@ -1,30 +1,35 @@
 <%- include('_head') %>
 
   <header>
-    <nav class="navbar navbar-expand-md navbar-dark bg-success">
-      <a id="title" class="navbar-brand" href="/urls">TinyApp</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
-        aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+      <a class="navbar-brand" href="/urls">TinyApp</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id=" navbarNavAltMarkup">
-        <div class="navbar-nav">
-          <a class="nav-item nav-link" href="/urls">My URLs</a>
-          <a class="nav-item nav-link" href="/urls/new">Add New URL</a>
-          <div class="d-flex flex-row" id="auth">
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="nav navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-item nav-link" href="/urls">My URLs</a>
+
+          </li>
+          <li class="nav-item">
+            <a class="nav-item nav-link" href="/urls/new">Add New URL</a>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav ml-auto ">
+          <li class="nav-item d-flex align-items-center">
             <% if(!user) { %>
               <a class="nav-item nav-link" href="/login">Login / Register</a>
               <% }else{ %>
                 <h4 id="welcome">
-                  Welcome <%=user.email%>
+                  <%=user.email%>
                 </h4>
                 <form id="logout" action="/logout" method="POST">
                   <button class="btn btn-outline-light" type="submit">Logout
                   </button>
                 </form>
                 <% } %>
-          </div>
-        </div>
-      </div>
-    </nav>
+          </li>
+        </ul>
   </header>
