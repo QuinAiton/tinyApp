@@ -3,9 +3,9 @@
   <body>
     <%- include('partials/_header') %>
       <main class="indexUrl" style="margin: 1em;">
-        <h3>
+        <h2>
           Custom URLs
-        </h3>
+        </h2>
         <table class="table">
           <thead>
             <tr>
@@ -43,10 +43,10 @@
                 </tr>
                 <% } %>
                   <% }else{ %>
-                    <h2>You must be Logged in To see your URLs</h2>
-                    <% } %>
           </tbody>
         </table>
+        <h3 id="LoginMessage">Please Login to View Your URLs!</h3>
+        <% } %>
       </main>
       <!-- Bootstrap JS -->
       <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

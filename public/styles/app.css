@@ -5,7 +5,9 @@
   font-size: 1.3em;
   padding-right: 20px;
 }
-
+#navLinks{ 
+  padding-left: 35px;
+}
 
 #title { 
   font-size: 1.5em;
@@ -23,9 +25,6 @@
 .register h1,.register p { 
   text-align: center;
 }
-.register .btn { 
-  text-align: center;
-}
 /* Url index */
 .indexUrl{ 
 padding-left: 20px;
@@ -37,6 +36,11 @@ text-align: center;
 align-items: center;
 justify-items: center;
 background-color: rgb(255, 255, 255);
+}
+
+#LoginMessage{ 
+  padding-top: 100px;
+ 
 }
 
 /* create URL styles */
