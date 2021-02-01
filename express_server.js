@@ -4,6 +4,7 @@ const express = require("express"),
   cookieSession = require("cookie-session"),
   methodOverride = require("method-override"),
   bcrypt = require("bcrypt"),
+  mongoose = require("mongoose"),
   app = express(),
   PORT = process.env.PORT || 8080;
 
@@ -11,6 +12,24 @@ const express = require("express"),
 const checkExistingEmail = require("./helpers/checkExistingEmail"),
   urlsForUser = require("./helpers/urlsForUser"),
   generateRandomString = require("./helpers/generateRandomString");
+
+//imported modules
+const Users = require("./models/users"),
+  Urls = require("./models/urls");
+
+//database initialization
+mongoose
+  .connect("mongodb://localhost:27017/TinyApp", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  })
+  .then(() => {
+    console.log("database connected");
+  })
+  .catch((err) => {
+    console.log("Database Error", err);
+  });
 
 //----------------------------environment set up & middleware
 app.set("view engine", "ejs");
@@ -25,7 +44,7 @@ app.use(
   })
 );
 
-//---------------------------------database
+// ---------------------------------database
 const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
@@ -49,6 +68,22 @@ const users = {
     password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m",
   },
 };
+
+const user = {
+  firstname: "quin",
+  lastname: "aiton",
+  username: "QuinAiton",
+  email: "helo@hotmail.com",
+  password: "1111",
+};
+
+Users.create(user)
+  .then((result) => {
+    console.log(result);
+  })
+  .catch((err) => {
+    console.log(err);
+  });
 
 //-------------------------------------Routes
 app.get("/", (req, res) => {
@@ -138,31 +173,35 @@ app.get("/registration", (req, res) => {
 
 app.post("/registration", (req, res) => {
   const saltRounds = 10;
-  const plainPass = req.body.user.password;
-  const email = req.body.user.email;
   const uniqueId = generateRandomString();
+  const user = req.body.user;
 
-  if (!checkExistingEmail(email, users)) {
-    bcrypt.hash(plainPass, saltRounds, (err, hash) => {
-      if (err) {
-        console.log(err);
-      } else {
-        users[uniqueId] = {
-          id: uniqueId,
-          email: req.body.user.email,
-          password: hash,
-        };
-        req.session.user_id = uniqueId;
-        res.redirect("/urls");
-      }
-    });
-  } else {
-    res
+  if (checkExistingEmail(user.email, users)) {
+    return res
       .status(400)
       .send(
         "That email already exists, Please choose a different one or log into the existing account"
       );
   }
+
+  bcrypt
+    .hash(user.password, saltRounds)
+    .then((hash) => {
+      user.password = hash;
+      user.id = uniqueId;
+      const newUser = new Users(user);
+      Users.create(newUser)
+        .then((newlyCreated) => {
+          req.session.user_id = uniqueId;
+          res.redirect("/urls");
+        })
+        .catch((err) => {
+          return console.log("registration err", err);
+        });
+    })
+    .catch((err) => {
+      return console.log("error in hash", err);
+    });
 });
 
 //login routes
@@ -172,28 +211,28 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const email = req.body.user.email;
-  const plainPass = req.body.user.password;
-  const HashPass = checkExistingEmail(email, users).password;
-  const key = checkExistingEmail(email, users).id;
-  if (checkExistingEmail(email, users)) {
-    bcrypt.compare(plainPass, HashPass, (err, result) => {
-      if (err) {
-        console.log(err);
-      } else {
-        if (checkExistingEmail(email, users) && result) {
-          req.session.user_id = key;
-          res.redirect("/urls");
-        } else {
-          res
-            .status(403)
-            .send("Authourization Denied: please check your credentials");
-        }
-      }
-    });
-  } else {
-    res.redirect("/registration");
+  const user = req.body.user;
+  const HashPass = checkExistingEmail(user.email, users).password;
+  const key = checkExistingEmail(user.email, users).id;
+
+  if (!checkExistingEmail(user.email, users)) {
+    return res.redirect("/registration");
   }
+
+  bcrypt
+    .compare(user.password, HashPass)
+    .then((result) => {
+      if (!checkExistingEmail(user.email, users) && result) {
+        res
+          .status(403)
+          .send("Authourization Denied: please check your credentials");
+      }
+      req.session.user_id = key;
+      res.redirect("/urls");
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 //logout route
