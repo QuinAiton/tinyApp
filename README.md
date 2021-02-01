@@ -1,6 +1,6 @@
 # TinyApp Project
 
-TinyApp is a full stack web application built with Node and Express that allows users to create and account and keep a list of shortend long URLs (à la bit.ly).
+TinyApp is a full stack web application built with Node and Express that allows users to create an account and keep a list of their favourite URLs in a shortend form (à la bit.ly). This application is currently in the building phase and does not have a database at the moment. Thus, meaning that work will only be saved untill the session is terminated. 
 
 ## Final Product
 

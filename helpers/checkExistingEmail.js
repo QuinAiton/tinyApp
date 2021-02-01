@@ -7,4 +7,5 @@ const checkExistingEmail = (email, database) => {
   return false;
 };
 
+
 module.exports = checkExistingEmail;

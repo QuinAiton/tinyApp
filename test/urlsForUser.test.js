@@ -28,7 +28,7 @@ describe('#urlsForUser', () => {
         longURL: "http://www.google.com",
         userID: "8pm1jb"
       }
-    }
+    };
     const actual = urlsForUser("8pm1jb", urlDatabase);
     assert.deepEqual(actual, expected);
   });
@@ -43,8 +43,8 @@ describe('#urlsForUser', () => {
         longURL: "http://www.google.com",
         userID: "111g11"
       }
-    }
+    };
     const actual = urlsForUser("111g11", urlDatabase);
     assert.deepEqual(actual, expected);
   });
-})
+});
