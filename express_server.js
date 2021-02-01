@@ -44,46 +44,29 @@ app.use(
   })
 );
 
-// ---------------------------------database
-const urlDatabase = {
-  b2xVn2: {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "8pm1jb",
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "8pm1jb",
-  },
-};
+// ---------------------------------database;
+// const urlDatabase = {
+//   b2xVn2: {
+//     longURL: "http://www.lighthouselabs.ca",
+//     userID: "8pm1jb",
+//   },
+//   "9sm5xK": {
+//     longURL: "http://www.google.com",
+//     userID: "8pm1jb",
+//   },
+// };
 
-const users = {
-  "8pm1jb": {
-    id: "8pm1jb",
-    email: "quinn@hotmail.com",
-    password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m",
-  },
-  "8pmwer": {
-    id: "8pm1jb",
-    email: "bonny@hotmail.com",
-    password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m",
-  },
-};
+// const users = {
+//   firstname: "quin",
+//   lastname: "aiton",
+//   username: "QuinAiton",
+//   email: "quinn@hotmail.com",
+//   password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m",
+// };
 
-const user = {
-  firstname: "quin",
-  lastname: "aiton",
-  username: "QuinAiton",
-  email: "helo@hotmail.com",
-  password: "1111",
-};
-
-Users.create(user)
-  .then((result) => {
-    console.log(result);
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+// Users.find({}).then((result) => {
+//   console.log(result);
+// });
 
 //-------------------------------------Routes
 app.get("/", (req, res) => {
@@ -91,29 +74,25 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userUrls = urlsForUser(req.session.user_id, urlDatabase);
-  const templateVars = {
-    urls: userUrls,
-    user: users[req.session.user_id],
-  };
-  res.render("urls_index", templateVars);
+  // const userUrls = urlsForUser(req.session.user_id, Urls.find({}));
+  const templateVars = {};
+  res.render("urls_index");
 });
 
 //create routes
 app.get("/urls/new", (req, res) => {
-  if (req.session.user_id) {
-    let templateVars = { user: users[req.session.user_id] };
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect("/login");
+  if (!req.session.user_id) {
+    return res.redirect("/login");
   }
+  let templateVars = { user: users[req.session.user_id] };
+  res.render("urls_new", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   let shortUrl = generateRandomString();
   urlDatabase[shortUrl] = {
     longURL: req.body.longURL,
-    userID: req.session.user_id,
+    // userID: req.session.user_id,
   };
   res.redirect("urls/" + shortUrl);
 });
@@ -130,25 +109,23 @@ app.get("/urls/:id", (req, res) => {
 
 //Delete Route
 app.delete("/urls/:id", (req, res) => {
-  if (req.session.user_id === urlDatabase[req.params.id].userID) {
-    delete urlDatabase[req.params.id];
-    res.redirect("/urls");
-  } else {
-    res.redirect("/login");
-  }
+  // if (!req.session.user_id === urlDatabase[req.params.id].userID) {
+  //   return res.redirect("/login");
+  // }
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
 });
 
 //update routes
 app.get("/urls/:id/update", (req, res) => {
-  if (req.session.user_id === urlDatabase[req.params.id].userID) {
-    const templateVars = {
-      name: req.params.id,
-      user: users[req.session.user_id],
-    };
-    res.render("urls_update", templateVars);
-  } else {
-    res.redirect("/login");
-  }
+  // if (!req.session.user_id === urlDatabase[req.params.id].userID) {
+  //   return res.redirect("/login");
+  // }
+  const templateVars = {
+    name: req.params.id,
+    user: users[req.session.user_id],
+  };
+  res.render("urls_update", templateVars);
 });
 
 app.put("/urls/:id", (req, res) => {
@@ -176,22 +153,22 @@ app.post("/registration", (req, res) => {
   const uniqueId = generateRandomString();
   const user = req.body.user;
 
-  if (checkExistingEmail(user.email, users)) {
-    return res
-      .status(400)
-      .send(
-        "That email already exists, Please choose a different one or log into the existing account"
-      );
-  }
+  // if (checkExistingEmail(user.email, users)) {
+  //   return res
+  //     .status(400)
+  //     .send(
+  //       "That email already exists, Please choose a different one or log into the existing account"
+  //     );
+  // }
 
   bcrypt
     .hash(user.password, saltRounds)
     .then((hash) => {
       user.password = hash;
-      user.id = uniqueId;
       const newUser = new Users(user);
       Users.create(newUser)
         .then((newlyCreated) => {
+          console.log(newlyCreated);
           req.session.user_id = uniqueId;
           res.redirect("/urls");
         })
@@ -206,33 +183,31 @@ app.post("/registration", (req, res) => {
 
 //login routes
 app.get("/login", (req, res) => {
-  let templateVars = { user: users[req.session.user_id] };
-  res.render("login", templateVars);
+  let templateVars = { user: Users[req.session.user_id] };
+  res.render("login");
 });
 
 app.post("/login", (req, res) => {
   const user = req.body.user;
-  const HashPass = checkExistingEmail(user.email, users).password;
-  const key = checkExistingEmail(user.email, users).id;
-
-  if (!checkExistingEmail(user.email, users)) {
-    return res.redirect("/registration");
-  }
-
-  bcrypt
-    .compare(user.password, HashPass)
-    .then((result) => {
-      if (!checkExistingEmail(user.email, users) && result) {
-        res
-          .status(403)
-          .send("Authourization Denied: please check your credentials");
-      }
-      req.session.user_id = key;
-      res.redirect("/urls");
+  checkExistingEmail(user.email, Users)
+    .then((existingUser) => {
+      bcrypt.compare(user.password, existingUser.password).then((result) => {
+        // if (!checkExistingEmail(user.email, users) && result) {
+        //   res
+        //     .status(403)
+        //     .send("Authourization Denied: please check your credentials");
+        // }
+        req.session.user_id = existingUser.id;
+        res.redirect("/urls");
+      });
     })
     .catch((err) => {
       console.log(err);
     });
+
+  // if (!checkExistingEmail(user.email, users)) {
+  //   return res.redirect("/registration");
+  // }
 });
 
 //logout route
