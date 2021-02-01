@@ -16,37 +16,34 @@
             </tr>
           </thead>
           <tbody>
-            <% if(user){ %>
-              <% for(let url in urls) { %>
+
                 <tr>
                   <td>
-                    <a href="u/<%= url%>">
-                      <%= url %>
+                    <a href="u/url">
+                    
                     </a>
                   </td>
                   <td>
-                    <%= urls[url].longURL%>
+                    longURL
                   </td>
                   <td>
-                    <form action="/urls/<%=url%>?_method=DELETE" method="POST">
+                    <form action="/urls/urlhere?_method=DELETE" method="POST">
                       <button class="btn btn-outline-danger" type="submit">Delete
                       </button>
                     </form>
                   </td>
                   <td>
-                    <a href="/urls/<%=url%>/update">
+                    <a href="/urls/urlhere/update">
                       <button class="btn btn-outline-warning" type="submit">
                         Edit
                       </button>
                     </a>
                   </td>
                 </tr>
-                <% } %>
-                  <% }else{ %>
+             
           </tbody>
         </table>
         <h3 id="LoginMessage">Please Login to View Your URLs!</h3>
-        <% } %>
       </main>
       <!-- Bootstrap JS -->
       <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
