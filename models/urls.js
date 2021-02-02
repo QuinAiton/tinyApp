@@ -12,4 +12,5 @@ const urlSchema = new mongoose.Schema({
   created: { type: Date, default: Date.now },
 });
 
-const Url = (module.exports = mongoose.model("Url", urlSchema));
+const Url = mongoose.model("Url", urlSchema);
+module.exports = Url;
