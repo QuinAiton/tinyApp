@@ -12,6 +12,7 @@ const express = require("express"),
 const checkExistingEmail = require("./helpers/checkExistingEmail"),
   urlsForUser = require("./helpers/urlsForUser"),
   generateRandomString = require("./helpers/generateRandomString");
+const urls = require("./models/urls");
 
 //imported modules
 const Users = require("./models/users"),
@@ -44,39 +45,21 @@ app.use(
   })
 );
 
-// ---------------------------------database;
-// const urlDatabase = {
-//   b2xVn2: {
-//     longURL: "http://www.lighthouselabs.ca",
-//     userID: "8pm1jb",
-//   },
-//   "9sm5xK": {
-//     longURL: "http://www.google.com",
-//     userID: "8pm1jb",
-//   },
-// };
-
-// const users = {
-//   firstname: "quin",
-//   lastname: "aiton",
-//   username: "QuinAiton",
-//   email: "quinn@hotmail.com",
-//   password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m",
-// };
-
-// Users.find({}).then((result) => {
-//   console.log(result);
-// });
-
 //-------------------------------------Routes
 app.get("/", (req, res) => {
   res.redirect("/login");
 });
 
 app.get("/urls", (req, res) => {
+  Urls.find({})
+    .then((allUrls) => {
+      console.log(allUrls);
+      res.render("urls_index", { urls: allUrls });
+    })
+    .catch((err) => {
+      console.log(err, "error loading urls");
+    });
   // const userUrls = urlsForUser(req.session.user_id, Urls.find({}));
-  const templateVars = {};
-  res.render("urls_index");
 });
 
 //create routes
@@ -84,27 +67,38 @@ app.get("/urls/new", (req, res) => {
   if (!req.session.user_id) {
     return res.redirect("/login");
   }
-  let templateVars = { user: users[req.session.user_id] };
+  let templateVars = { user: Users[req.session.user_id] };
   res.render("urls_new", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   let shortUrl = generateRandomString();
-  urlDatabase[shortUrl] = {
+  const url = {
+    shortURL: shortUrl,
     longURL: req.body.longURL,
-    // userID: req.session.user_id,
+    owner: {
+      id: req.session.user_id,
+    },
   };
-  res.redirect("urls/" + shortUrl);
+  const newUrl = new Urls(url);
+  Urls.create(newUrl)
+    .then(() => {
+      res.redirect("urls/" + shortUrl);
+    })
+    .catch((err) => {
+      console.log("error in url post", err);
+    });
 });
 
 //show route
 app.get("/urls/:id", (req, res) => {
-  const templateVars = {
-    shortURL: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
-    user: users[req.session.user_id],
-  };
-  res.render("urls_show", templateVars);
+  Urls.findOne({ shortURL: req.params.id })
+    .then((result) => {
+      res.render("urls_show", result);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 //Delete Route
@@ -144,32 +138,31 @@ app.get("/u/:id", (req, res) => {
 
 //registration routes
 app.get("/registration", (req, res) => {
-  let templateVars = { user: users[req.session.user_id] };
-  res.render("register", templateVars);
+  res.render("register");
 });
 
 app.post("/registration", (req, res) => {
   const saltRounds = 10;
-  const uniqueId = generateRandomString();
-  const user = req.body.user;
+  const newUser = req.body;
 
-  // if (checkExistingEmail(user.email, users)) {
-  //   return res
-  //     .status(400)
-  //     .send(
-  //       "That email already exists, Please choose a different one or log into the existing account"
-  //     );
-  // }
+  checkExistingEmail(newUser.email, Users).then((user) => {
+    if (user) {
+      return res
+        .status(400)
+        .send(
+          "That email already exists, Please choose a different one or log into the existing account"
+        );
+    }
+  });
 
   bcrypt
-    .hash(user.password, saltRounds)
+    .hash(newUser.password, saltRounds)
     .then((hash) => {
-      user.password = hash;
-      const newUser = new Users(user);
-      Users.create(newUser)
+      newUser.password = hash;
+      const userObj = new Users(newUser);
+      Users.create(userObj)
         .then((newlyCreated) => {
-          console.log(newlyCreated);
-          req.session.user_id = uniqueId;
+          req.session.user_id = newlyCreated.id;
           res.redirect("/urls");
         })
         .catch((err) => {
@@ -192,12 +185,12 @@ app.post("/login", (req, res) => {
   checkExistingEmail(user.email, Users)
     .then((existingUser) => {
       bcrypt.compare(user.password, existingUser.password).then((result) => {
-        // if (!checkExistingEmail(user.email, users) && result) {
-        //   res
-        //     .status(403)
-        //     .send("Authourization Denied: please check your credentials");
-        // }
-        req.session.user_id = existingUser.id;
+        if (!checkExistingEmail(user.email, Users) && result) {
+          return res
+            .status(403)
+            .send("Authourization Denied: please check your credentials");
+        }
+        req.session.user_id = existingUser._id;
         res.redirect("/urls");
       });
     })
