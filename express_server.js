@@ -13,6 +13,7 @@ const checkExistingEmail = require("./helpers/checkExistingEmail"),
   urlsForUser = require("./helpers/urlsForUser"),
   generateRandomString = require("./helpers/generateRandomString");
 const urls = require("./models/urls");
+const User = require("./models/users");
 
 //imported modules
 const Users = require("./models/users"),
@@ -53,8 +54,11 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   Urls.find({})
     .then((allUrls) => {
-      console.log(allUrls);
-      res.render("urls_index", { urls: allUrls });
+      const userURls = urlsForUser(req.session.user_id, allUrls);
+      res.render("urls_index", {
+        urls: userURls,
+        user: req.session.user_id,
+      });
     })
     .catch((err) => {
       console.log(err, "error loading urls");
@@ -176,8 +180,14 @@ app.post("/registration", (req, res) => {
 
 //login routes
 app.get("/login", (req, res) => {
-  let templateVars = { user: Users[req.session.user_id] };
-  res.render("login");
+  const id = req.session.user_id;
+  User.findById(id)
+    .then((foundUser) => {
+      res.render("login", { user: foundUser });
+    })
+    .catch((err) => {
+      console.log(err, "in login");
+    });
 });
 
 app.post("/login", (req, res) => {
