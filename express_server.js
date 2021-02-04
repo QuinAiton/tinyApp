@@ -12,8 +12,6 @@ const express = require("express"),
 const checkExistingEmail = require("./helpers/checkExistingEmail"),
   urlsForUser = require("./helpers/urlsForUser"),
   generateRandomString = require("./helpers/generateRandomString");
-const urls = require("./models/urls");
-const User = require("./models/users");
 
 //imported modules
 const Users = require("./models/users"),
@@ -71,8 +69,7 @@ app.get("/urls/new", (req, res) => {
   if (!req.session.user_id) {
     return res.redirect("/login");
   }
-  let templateVars = { user: Users[req.session.user_id] };
-  res.render("urls_new", templateVars);
+  res.render("urls_new", { user: req.session.user_id });
 });
 
 app.post("/urls", (req, res) => {
@@ -86,8 +83,8 @@ app.post("/urls", (req, res) => {
   };
   const newUrl = new Urls(url);
   Urls.create(newUrl)
-    .then(() => {
-      res.redirect("urls/" + shortUrl);
+    .then((newUrl) => {
+      res.redirect("urls/" + newUrl.owner.id);
     })
     .catch((err) => {
       console.log("error in url post", err);
@@ -96,21 +93,20 @@ app.post("/urls", (req, res) => {
 
 //show route
 app.get("/urls/:id", (req, res) => {
-  Urls.findOne({ shortURL: req.params.id })
+  Urls.findOne({ _id: req.params.id })
     .then((result) => {
-      res.render("urls_show", result);
+      res.render("urls_show", { urls: result, user: req.session.user_id });
     })
     .catch((err) => {
-      console.log(err);
+      console.log(err, "error in show");
     });
 });
 
 //Delete Route
 app.delete("/urls/:id", (req, res) => {
-  // if (!req.session.user_id === urlDatabase[req.params.id].userID) {
-  //   return res.redirect("/login");
-  // }
-  delete urlDatabase[req.params.id];
+  Urls.findOneAndDelete({ shortURL: req.params.id }).catch((err) => {
+    console.log(err, "in delete route");
+  });
   res.redirect("/urls");
 });
 
@@ -119,22 +115,32 @@ app.get("/urls/:id/update", (req, res) => {
   // if (!req.session.user_id === urlDatabase[req.params.id].userID) {
   //   return res.redirect("/login");
   // }
-  const templateVars = {
-    name: req.params.id,
-    user: users[req.session.user_id],
-  };
-  res.render("urls_update", templateVars);
+  Urls.findById(req.params.id)
+    .then((foundUrl) => {
+      const templateVars = {
+        url: foundUrl,
+        user: req.session.user_id,
+      };
+      res.render("urls_update", templateVars);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 app.put("/urls/:id", (req, res) => {
-  let shortURL = req.params.id;
-  urlDatabase[shortURL].longURL = req.body.longURL;
-  res.redirect("/urls/" + shortURL);
+  Urls.findByIdAndUpdate(req.params.id, { longURL: req.body.longURL })
+    .then((foundUrl) => {
+      res.redirect("/urls/" + foundUrl._id);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 //Long URl redirect route
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
+  const longURL = req.params.id.longURL;
   res.redirect(longURL);
 });
 
@@ -181,13 +187,7 @@ app.post("/registration", (req, res) => {
 //login routes
 app.get("/login", (req, res) => {
   const id = req.session.user_id;
-  User.findById(id)
-    .then((foundUser) => {
-      res.render("login", { user: foundUser });
-    })
-    .catch((err) => {
-      console.log(err, "in login");
-    });
+  res.render("login", { user: id });
 });
 
 app.post("/login", (req, res) => {
