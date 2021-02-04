@@ -23,7 +23,7 @@
               <a class="nav-item nav-link" href="/login">Login / Register</a>
               <% }else{ %>
                 <h4 id="welcome">
-                 Welcome <%= user.username%> 
+                 Welcome <%=user.username%> 
                 </h4>
                 <form id="logout" action="/logout" method="POST">
                   <button class="btn btn-outline-light" type="submit">Logout
