@@ -209,14 +209,9 @@ app.post('/login', (req, res) => {
         .status(403)
         .send('Authourization Denied: please check your credentials');
     })
-
     .catch((err) => {
       console.log(err);
     });
-
-  // if (!checkExistingEmail(user.email, users)) {
-  //   return res.redirect("/registration");
-  // }
 });
 
 //logout route
