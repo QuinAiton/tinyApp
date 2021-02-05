@@ -6,6 +6,7 @@ const checkExistingEmail = (email, database) => {
         for (const user of result) {
           if (user.email === email) resolve(user);
         }
+        resolve(false);
       })
       .catch((err) => {
         console.log(err);
