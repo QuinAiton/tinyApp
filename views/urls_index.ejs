@@ -43,7 +43,9 @@
               </tbody>
               <% } %> 
         </table>
+       <% if(!user){ %>  
         <h3 id="LoginMessage">Please Login to View Your URLs!</h3>
+        <% } %> 
       </main>
       <!-- Bootstrap JS -->
       <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
