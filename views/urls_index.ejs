@@ -16,37 +16,36 @@
             </tr>
           </thead>
           <tbody>
-            <% if(user){ %>
-              <% for(let url in urls) { %>
+            <% for( const url of urls) {%>
                 <tr>
                   <td>
-                    <a href="u/<%= url%>">
-                      <%= url %>
+                    <a href="u/<%=url._id%>">
+                    <%= url.shortURL %> 
                     </a>
                   </td>
                   <td>
-                    <%= urls[url].longURL%>
+                    <%= url.longURL %> 
                   </td>
                   <td>
-                    <form action="/urls/<%=url%>?_method=DELETE" method="POST">
+                    <form action="/urls/<%=url._id%>?_method=DELETE" method="POST">
                       <button class="btn btn-outline-danger" type="submit">Delete
                       </button>
                     </form>
                   </td>
                   <td>
-                    <a href="/urls/<%=url%>/update">
+                    <a href="/urls/<%=url._id%>/update">
                       <button class="btn btn-outline-warning" type="submit">
                         Edit
                       </button>
                     </a>
                   </td>
                 </tr>
-                <% } %>
-                  <% }else{ %>
-          </tbody>
+              </tbody>
+              <% } %> 
         </table>
+       <% if(!user){ %>  
         <h3 id="LoginMessage">Please Login to View Your URLs!</h3>
-        <% } %>
+        <% } %> 
       </main>
       <!-- Bootstrap JS -->
       <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

@@ -7,11 +7,11 @@
           Your Short URL has been created!
         </div>
         <div class="card-body">
-          <h5 class="card-title">TinyURL for:<%= longURL%>
+          <h5 class="card-title">TinyURL for:<%=urls.longURL%>
           </h5>
           <p class="card-text">Short URL:
-            <a href="/u/<%= shortURL%>">
-              <%= shortURL %>
+            <a href="/u/<%=urls.shortURL%>">
+              <%=urls.shortURL %>
             </a>
           </p>
           <a href="/urls" class="btn btn-primary">Show All</a>

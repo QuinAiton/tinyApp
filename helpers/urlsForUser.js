@@ -1,8 +1,8 @@
 const urlsForUser = (id, database) => {
-  let userUrls = {};
-  for (const key in database) {
-    if (database[key].userID === id) {
-      userUrls[key] = database[key];
+  let userUrls = [];
+  for (const key of database) {
+    if (key.owner.id == id) {
+      userUrls.push(key);
     }
   }
   return userUrls;

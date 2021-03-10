@@ -1,10 +1,10 @@
-
 //packages
 const express = require('express'),
   bodyParser = require('body-parser'),
   cookieSession = require('cookie-session'),
   methodOverride = require('method-override'),
   bcrypt = require('bcrypt'),
+  mongoose = require('mongoose'),
   app = express(),
   PORT = process.env.PORT || 8080;
 
@@ -13,188 +13,205 @@ const checkExistingEmail = require('./helpers/checkExistingEmail'),
   urlsForUser = require('./helpers/urlsForUser'),
   generateRandomString = require('./helpers/generateRandomString');
 
+//imported modules
+const Users = require('./models/users'),
+  Urls = require('./models/urls');
+
+//database initialization
+mongoose
+  .connect('mongodb://localhost:27017/TinyApp', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  })
+  .then(() => {
+    console.log('database connected');
+  })
+  .catch((err) => {
+    console.log('Database Error', err);
+  });
 
 //----------------------------environment set up & middleware
 app.set('view engine', 'ejs');
-app.use(express.static(__dirname + "/public"));
+app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
-app.use(cookieSession({
-  name: 'session',
-  keys: ['lighthouseLabs'],
-  maxAge: 24 * 60 * 60 * 1000
-}));
-//
-
-//---------------------------------database
-let urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "8pm1jb"
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "8pm1jb"
-  },
-};
-
-let users = {
-  "8pm1jb": {
-    id: "8pm1jb",
-    email: "quinn@hotmail.com",
-    password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m"
-  },
-  "8pmwer": {
-    id: "8pm1jb",
-    email: "bonny@hotmail.com",
-    password: "$2b$10$NNtEVwY8IaKh3o0UibABYO7Pi/t5xU4VduLCGlNrffawR11g55n8m"
-  }
-};
+app.use(
+  cookieSession({
+    name: 'session',
+    keys: ['lighthouseLabs'],
+    maxAge: 24 * 60 * 60 * 1000,
+  })
+);
 
 //-------------------------------------Routes
-
 app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
 app.get('/urls', (req, res) => {
-  const userUrls = urlsForUser(req.session.user_id, urlDatabase);
-  const templateVars = {
-    urls: userUrls,
-    user: users[req.session.user_id]
-  };
-  res.render('urls_index', templateVars);
+  Urls.find({})
+    .then((allUrls) => {
+      const userURls = urlsForUser(req.session.user_id, allUrls);
+      res.render('urls_index', {
+        urls: userURls,
+        user: req.session.user_id,
+      });
+    })
+    .catch((err) => {
+      console.log(err, 'error loading urls');
+    });
+  // const userUrls = urlsForUser(req.session.user_id, Urls.find({}));
 });
 
 //create routes
 app.get('/urls/new', (req, res) => {
-  if (req.session.user_id) {
-    let templateVars = { user: users[req.session.user_id] };
-    res.render('urls_new', templateVars);
-  } else {
-    res.redirect('/login');
+  if (!req.session.user_id) {
+    return res.redirect('/login');
   }
+  res.render('urls_new', { user: req.session.user_id });
 });
 
 app.post('/urls', (req, res) => {
   let shortUrl = generateRandomString();
-  urlDatabase[shortUrl] = {
+  const url = {
+    shortURL: shortUrl,
     longURL: req.body.longURL,
-    userID: req.session.user_id
+    owner: {
+      id: req.session.user_id,
+    },
   };
-  res.redirect('urls/' + shortUrl);
+  const newUrl = new Urls(url);
+  Urls.create(newUrl)
+    .then((newUrl) => {
+      console.log(newUrl);
+      res.redirect('/urls/' + newUrl._id);
+    })
+    .catch((err) => {
+      console.log('error in url post', err);
+    });
 });
 
 //show route
 app.get('/urls/:id', (req, res) => {
-  const templateVars = {
-    shortURL: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
-    user: users[req.session.user_id]
-  };
-  res.render('urls_show', templateVars);
+  Urls.findById(req.params.id)
+    .then((result) => {
+      res.render('urls_show', { urls: result, user: req.session.user_id });
+    })
+    .catch((err) => {
+      console.log(err, 'error in show');
+    });
 });
 
 //Delete Route
 app.delete('/urls/:id', (req, res) => {
-  if (req.session.user_id === urlDatabase[req.params.id].userID) {
-    delete urlDatabase[req.params.id];
-    res.redirect('/urls');
-  } else {
-    res.redirect('/login');
-  }
+  Urls.findByIdAndDelete(req.params.id).catch((err) => {
+    console.log(err, 'in delete route');
+  });
+  res.redirect('/urls');
 });
-
 
 //update routes
 app.get('/urls/:id/update', (req, res) => {
-  if (req.session.user_id === urlDatabase[req.params.id].userID) {
-    const templateVars = {
-      name: req.params.id,
-      user: users[req.session.user_id]
-    };
-    res.render('urls_update', templateVars);
-  } else {
-    res.redirect('/login');
+  if (!req.session.user_id) {
+    return res.redirect('/login');
   }
+  Urls.findById(req.params.id)
+    .then((foundUrl) => {
+      const templateVars = {
+        url: foundUrl,
+        user: req.session.user_id,
+      };
+      res.render('urls_update', templateVars);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 app.put('/urls/:id', (req, res) => {
-  let shortURL = req.params.id;
-  urlDatabase[shortURL].longURL = req.body.longURL;
-  res.redirect('/urls/' + shortURL);
-
+  Urls.findByIdAndUpdate(req.params.id, { longURL: req.body.longURL })
+    .then((foundUrl) => {
+      res.redirect('/urls/' + foundUrl._id);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 //Long URl redirect route
 app.get('/u/:id', (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
+  const longURL = req.params.id.longURL;
   res.redirect(longURL);
 });
 
-
 //----------------------------Authentification
-
 
 //registration routes
 app.get('/registration', (req, res) => {
-  let templateVars = { user: users[req.session.user_id] };
-  res.render('register', templateVars);
+  res.render('register', { user: req.session.user_id });
 });
 
 app.post('/registration', (req, res) => {
   const saltRounds = 10;
-  const plainPass = req.body.user.password;
-  const email = req.body.user.email;
-  const uniqueId = generateRandomString();
+  const newUser = req.body;
 
-  if (!checkExistingEmail(email, users)) {
-    bcrypt.hash(plainPass, saltRounds, (err, hash) => {
-      if (err) {
-        console.log(err)
-      } else {
-        users[uniqueId] = {
-          id: uniqueId,
-          email: req.body.user.email,
-          password: hash,
-        };
-        req.session.user_id = uniqueId;
-        res.redirect('/urls');
-      }
-    });
-  } else {
-    res.status(400).send('That email already exists, Please choose a different one or log into the existing account');
-  }
+  checkExistingEmail(newUser.email, Users).then((user) => {
+    if (user) {
+      return res
+        .status(400)
+        .send(
+          'That email already exists, Please choose a different one or log into the existing account'
+        );
+    }
+    bcrypt
+      .hash(newUser.password, saltRounds)
+      .then((hash) => {
+        newUser.password = hash;
+        const userObj = new Users(newUser);
+        Users.create(userObj)
+          .then((newlyCreated) => {
+            req.session.user_id = newlyCreated.id;
+            req.session.username = newlyCreated.username;
+            res.redirect('/urls');
+          })
+          .catch((err) => {
+            return console.log('registration err', err);
+          });
+      })
+      .catch((err) => {
+        return console.log('error in hash', err);
+      });
+  });
 });
-
 
 //login routes
 app.get('/login', (req, res) => {
-  let templateVars = { user: users[req.session.user_id] };
-  res.render('login', templateVars);
+  const id = req.session.user_id;
+  res.render('login', { user: id });
 });
 
 app.post('/login', (req, res) => {
-  const email = req.body.user.email;
-  const plainPass = req.body.user.password;
-  const HashPass = checkExistingEmail(email, users).password;
-  const key = checkExistingEmail(email, users).id;
-  if (checkExistingEmail(email, users)) {
-    bcrypt.compare(plainPass, HashPass, (err, result) => {
-      if (err) {
-        console.log(err);
-      } else {
-        if (checkExistingEmail(email, users) && result) {
-          req.session.user_id = key;
-          res.redirect('/urls');
-        } else {
-          res.status(403).send('Authourization Denied: please check your credentials');
-        }
+  const user = req.body;
+  checkExistingEmail(user.email, Users)
+    .then((existingUser) => {
+      if (existingUser) {
+        bcrypt
+          .compare(user.password, existingUser.password)
+          .then((passMatch) => {
+            if (passMatch) {
+              req.session.user_id = existingUser._id;
+              res.redirect('/urls');
+            }
+          });
       }
+      return res
+        .status(403)
+        .send('Authourization Denied: please check your credentials');
+    })
+    .catch((err) => {
+      console.log(err);
     });
-  } else {
-    res.redirect('/registration');
-  }
 });
 
 //logout route
@@ -202,8 +219,6 @@ app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
 });
-
-
 
 //server listener
 app.listen(PORT, () => {
